@@ -1,0 +1,274 @@
+---
+title: "Untitled"
+author: "Nguyễn Thành Long"
+date: "2025-03-03"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(readxl)
+library(zoo)
+library(TTR)
+library(tseries)
+library(urca)
+library(forecast)
+library(Metrics) 
+
+library(foreign)
+library(car) 
+library(lmtest)
+library(sandwich)
+
+library(stargazer)
+library(tidyverse)
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(caret)
+library(caTools)
+
+```
+
+## PHẦN 1: DỰ BÁO MÔ HÌNH
+```{r}
+dat = read_excel("C:/Users/DELL/Documents/1234.xlsx", sheet = "Sheet2", range = "B1:B61")
+attach(dat)
+dat = ts(dat, start = c(2010,1), frequency = 4)
+
+# CHIA TRAINING DATA
+train_dat = dat[1:(length(dat)-4)]
+val_dat = dat[(length(dat)-3):length(dat)]
+rev1 = ts(train_dat, start = c(2010,1), frequency = 4)
+rev = ts(dat, start = c(2010, 1), frequency = 4)
+rev1
+
+```
+
+
+```{r}
+# Tạo biến xu thế thời gian 
+plot(dat, xaxt = "n", type = "l", xlab = "Năm", ylab = "Doanh thu", main = "Doanh thu theo thời gian")
+years <- seq(2010, 2025, by = 1)
+axis(1, at = seq(2010, 2025, by = 1), labels = years)
+
+t = head(time,-4)
+t
+
+```
+
+
+```{r}
+# MÔ HÌNH DẠNG TUYẾN TÍNH 
+reg_linlin = lm(rev1 ~ t)
+summary(reg_linlin)
+rmse(Revenue, fitted(reg_linlin))
+
+mape(Revenue, fitted(reg_linlin))
+
+
+# MÔ HÌNH DẠNG LIN-LOG
+reg_lin_log = lm(rev1~log(t))
+summary(reg_lin_log)
+rmse(Revenue, fitted(reg_lin_log))
+
+mape(Revenue, fitted(reg_lin_log))
+
+
+# MÔ HÌNH DẠNG LOG-LIN
+reg_log_lin = lm(log(rev1)~t)
+summary(reg_log_lin)
+rmse(Revenue, exp(fitted(reg_log_lin)))
+
+mape(Revenue, exp(fitted(reg_log_lin)))
+
+
+# MÔ HÌNH DẠNG LOG-LOG
+reg_log_log = lm(log(rev1)~log(t))
+summary(reg_log_log)
+rmse(Revenue,exp(fitted(reg_log_log)))
+
+mape(Revenue, exp(fitted(reg_log_log)))
+
+```
+
+
+```{r}
+# BIẾN GIẢ MÙA VỤ THEO QUÝ
+x = as.data.frame(60:63)
+names(x) = "time"
+predict(reg_linlin, newdata = x)
+s1 <- c(rep(c(1,0,0,0), 15))
+s2 <- c(rep(c(0,1,0,0), 15))
+s3 <- c(rep(c(0,0,1,0), 15))
+s4 <- c(rep(c(0,0,0,1), 15))
+s1 = s1[1:56]
+s2 = s2[1:56]
+s3 = s3[1:56]
+s4 = s4[1:56]
+```
+
+
+```{r}
+# MÔ HÌNH HỒI QUY XU THẾ THỜI GIAN TUYẾN TÍNH VÀ MÙA VỤ 
+# DẠNG CỘNG
+reg_add = lm(rev1~t+s2+s3+s4)
+summary(reg_add)
+rmse(Revenue, fitted(reg_add))
+
+mape(Revenue, fitted(reg_add))
+
+```
+
+
+```{r}
+# DẠNG NHÂN 
+reg_mul = lm(rev1 ~ t + t*s2 + t*s3+ t*s4)
+summary(reg_mul)
+rmse(Revenue, fitted(reg_mul))
+
+mape(Revenue, fitted(reg_mul))
+
+
+```
+
+```{r}
+# MÔ HÌNH HOLTWINTERS CÓ MÙA VỤ DẠNG CỘNG 
+
+hw.rev.a = HoltWinters(rev1, seasonal = 'a')
+hw.rev.a
+
+pred = forecast(hw.rev.a, h = 4)
+rmse(pred$mean, val_dat)
+```
+
+```{r}
+# MÔ HÌNH HOLTWINTERS CÓ MÙA VỤ DẠNG NHÂN 
+hw.rev.m = HoltWinters(rev1, seasonal = 'm')
+hw.rev.m
+pred = forecast(hw.rev.m, h = 4)
+rmse(pred$mean, val_dat)
+```
+```{r}
+# Dự báo năm 2025 theo mô hình tuyến tính mùa vụ dạng nhân 
+t_total=head(time,length(time))
+s1 <- c(rep(c(1,0,0,0), 15))
+s2 <- c(rep(c(0,1,0,0), 15))
+s3 <- c(rep(c(0,0,1,0), 15))
+s4 <- c(rep(c(0,0,0,1), 15))
+s1 = s1[1:60]
+s2 = s2[1:60]
+s3 = s3[1:60]
+s4 = s4[1:60]
+rev.a_2024 = lm(rev~t_total + t_total*s2 + t_total*s3+ t_total*s4 ) # Mô hình tuyến tính mùa vụ dạng nhân năm 2010-2024
+rev.a_2024
+
+t_new <- 61:64
+season_new <- (t_new - 1) %% 4 + 1
+
+s2_new <- ifelse(season_new == 2, 1, 0)
+s3_new <- ifelse(season_new == 3, 1, 0)
+s4_new <- ifelse(season_new == 4, 1, 0)
+
+newdata <- data.frame(t_total = t_new, s2 = s2_new, s3 = s3_new, s4 = s4_new)
+
+forecast_4q <- predict(rev.a_2024, newdata = newdata)
+forecast_4q
+
+```
+## PHẦN 2: CHUỖI GIÁ
+```{r}
+data=read_excel("C:/Users/DELL/Documents/Chuỗi thời gian/Data gia cp SHS.xlsx")
+price=data$price
+ln_price=data$log_returns
+ln_price=na.omit(ln_price)
+
+# Kiểm định ADF chuỗi giá
+adf_none <- ur.df(price, type = "none", selectlags = "AIC")
+summary(adf_none)
+
+adf_drift <- ur.df(price, type = "drift", selectlags = "AIC")
+summary(adf_drift)
+
+adf_trend <- ur.df(price, type = "trend", selectlags = "AIC")
+summary(adf_trend)
+```
+
+```{r}
+diff_price <- diff(price)  # Tính chuỗi sai phân bậc 1
+adf_diff <- ur.df(diff_price, type = "drift", selectlags = "AIC")
+summary(adf_diff)
+```
+```{r}
+# Vẽ ACF, PACF chuỗi giá
+Acf(diff(price))
+Pacf(diff(price))
+```
+
+```{r}
+# Mô hình ARIMA(1,1,0)
+arima_1 <- Arima(price, order = c(1,1,0))
+AIC_1 <- arima_1$aic
+print(paste("AIC của ARIMA(1,1,0):", AIC_1))
+
+# Mô hình ARIMA(0,1,1)
+arima_2 <- Arima(price, order = c(0,1,1))
+AIC_2 <- arima_2$aic
+print(paste("AIC của ARIMA(0,1,1):", AIC_2))
+
+# Kiểm tra phần dư nhiễu trắng
+checkresiduals(arima_1)
+checkresiduals(arima_2)
+
+# Kiểm tra nghiệm đơn vị
+autoplot(arima_1)
+```
+
+
+
+
+```{r}
+# Dự báo 10 kỳ tiếp
+forecast_result <- forecast(arima_1, h = 10)
+print(forecast_result)
+```
+
+```{r}
+# Chuỗi lợi suất
+adf_none1 <- ur.df(ln_price, type = "none", selectlags = "AIC")
+summary(adf_none)
+
+adf_drift1 <- ur.df(ln_price, type = "drift", selectlags = "AIC")
+summary(adf_drift)
+
+adf_trend1 <- ur.df(ln_price, type = "trend", selectlags = "AIC")
+summary(adf_trend)
+```
+```{r}
+# Đồ thị ACF, PACF chuỗi lợi suất
+
+Acf(ln_price)
+Pacf(ln_price)
+```
+
+```{r}
+# Mô hình ARIMA(1,0,1)
+arima_3 <- Arima(ln_price, order = c(1,0,1))
+AIC_3 <- arima_3$aic
+print(paste("AIC của ARIMA(1,0,1):", AIC_3))
+
+# Mô hình ARIMA(2,0,1)
+arima_4 <- Arima(ln_price, order = c(2,0,1))
+AIC_4 <- arima_4$aic
+print(paste("AIC của ARIMA(2,0,1):", AIC_4))
+
+autoplot(arima_3)
+forecast_result2 <- forecast(arima_3, h = 10)
+print(forecast_result2)
+```
+```
+
+
+
