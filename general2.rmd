@@ -1,0 +1,240 @@
+---
+title: "Untitled"
+output: word_document
+date: "2025-04-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(foreign)
+library(car)
+library(carData)
+library(zoo)
+library(lmtest)
+library(dynlm)
+library(sandwich)
+library(stargazer)
+library(dplyr)
+library(systemfit)
+library(caTools)
+library(readxl)
+library(stats)
+library(AER)
+library(stringr)
+library(mlogit)
+library(nnet)
+library(caret)
+library(reshape2)
+library(survival)
+library(xts)
+library(forecast)
+library(Metrics)
+library(tseries)
+library(tsutils)
+library(ggplot2)
+library(urca)
+library(rugarch)
+library(vars)
+
+price=read_excel("E:/NEU SLIDE/TIMES SERIES/General2.xlsx")
+
+price=ts(price, start=1)
+price=data.frame(price)
+
+AGR=price$pAGR
+SHS=price$pSHS
+VOS=price$pVOS
+VSC=price$pVSC
+
+diffAGR=diff(AGR)
+diffSHS=diff(SHS)
+diffVOS=diff(VOS)
+diffVSC=diff(VSC)
+
+#ADF chuỗi giá
+#Kiểm định none
+summary(ur.df(AGR,type = "none",lag = 0)) #Chuỗi ko dừng
+summary(ur.df(SHS,type = "none",lag = 0)) #Chuỗi ko dừng
+summary(ur.df(VOS,type = "none",lag = 0)) #Chuỗi ko dừng
+summary(ur.df(VSC,type = "none",lag = 0)) #Chuỗi ko dừng
+#Kiểm định drift
+summary(ur.df(AGR,type = "drift",lag = 0)) #Ko
+summary(ur.df(SHS,type = "drift",lag = 0)) #Ko
+summary(ur.df(VOS,type = "drift",lag = 0)) #Ko
+summary(ur.df(VSC,type = "drift",lag = 0)) #Ko
+#Kiểm định trend:
+summary(ur.df(AGR, type="trend", lag=0)) #Ko
+summary(ur.df(SHS, type="trend", lag=0)) #Ko
+summary(ur.df(VOS, type="trend", lag=0)) #Ko
+summary(ur.df(VSC, type="trend", lag=0)) #Ko
+
+
+#ADF chuỗi sai phân bậc 1
+#Kiểm định none
+summary(ur.df(diffAGR,type = "none",lag = 0))
+summary(ur.df(diffSHS,type = "none",lag = 0))
+summary(ur.df(diffVOS,type = "none",lag = 0))
+summary(ur.df(diffVSC,type = "none",lag = 0))
+#Kiểm định drift
+summary(ur.df(diffAGR,type = "drift",lag = 0))
+summary(ur.df(diffSHS,type = "drift",lag = 0))
+summary(ur.df(diffVOS,type = "drift",lag = 0))
+summary(ur.df(diffVSC,type = "drift",lag = 0))
+#Kiểm định trend:
+summary(ur.df(diffAGR, type="trend", lag=0))
+summary(ur.df(diffSHS, type="trend", lag=0))
+summary(ur.df(diffVOS, type="trend", lag=0))
+summary(ur.df(diffVSC, type="trend", lag=0))
+
+#4 chuỗi giá dừng sai phân bậc 1, đủ điều kiện thực hiện kiểm định đồng tích hợp
+```
+
+
+
+```{r cars}
+#Kiểm định đồng tích hợp của Johansen
+#Kiểm định với tiêu chí Trace
+summary(ca.jo(data.frame(AGR, SHS, VOS, VSC),type = "trace"))
+
+#Kiểm định với tiêu chí Eigen
+summary(ca.jo(data.frame(AGR, SHS, VOS, VSC),type = "eigen"))
+
+#Không có đồng tích hợp giữa các chuỗi giá
+```
+
+
+```{r cars}
+return=read_excel("E:/NEU SLIDE/TIMES SERIES/Book3.xlsx")
+return=ts(return, start=1)
+return=data.frame(return)
+
+rAGR=return$rAGR
+rSHS=return$rSHS
+rVOS=return$rVOS
+rVSC=return$rVSC
+
+#Kiểm định Granger
+#AGR
+grangertest(rAGR, rSHS, order = 1)
+grangertest(rAGR, rSHS, order = 2)
+
+grangertest(rAGR, rVOS, order = 1)
+grangertest(rAGR, rVOS, order = 2)
+
+grangertest(rAGR, rVSC, order = 1)
+grangertest(rAGR, rVSC, order = 2)
+
+#SHS
+grangertest(rSHS, rAGR, order = 1)
+grangertest(rSHS, rAGR, order = 2)
+
+grangertest(rSHS, rVOS, order = 1)
+grangertest(rSHS, rVOS, order = 2)
+
+grangertest(rSHS, rVSC, order = 1)
+grangertest(rSHS, rVSC, order = 2)
+
+#VOS
+grangertest(rVOS, rAGR, order = 1)
+grangertest(rVOS, rAGR, order = 2)
+
+grangertest(rVOS, rSHS, order = 1)
+grangertest(rVOS, rSHS, order = 2)
+
+grangertest(rVOS, rVSC, order = 1)
+grangertest(rVOS, rVSC, order = 2)
+
+#VCS
+grangertest(rVSC, rAGR, order = 1)
+grangertest(rVSC, rAGR, order = 2)
+
+grangertest(rVSC, rSHS, order = 1)
+grangertest(rVSC, rSHS, order = 2)
+
+grangertest(rVSC, rVOS, order = 1)
+grangertest(rVSC, rVOS, order = 2)
+
+
+#VAR
+data_var <- data.frame(rAGR, rSHS, rVOS, rVSC)
+VARselect(data_var)
+#Tiêu chí AIC và FPE chọn p=6
+#Tiêu chí HQ và SC chọn p=1
+
+
+#VAR với p=6
+var_model1 <- VAR(data_var, p = 6, type = "const")
+summary(var_model1)
+
+
+#VAR với p=1
+var_model2 <- VAR(data_var, p = 1, type = "const")
+summary(var_model2)
+
+#Kiểm định tự tương quan của phần dư
+serial.test(var_model2)
+
+#hàm phản ứng
+irf1=irf(var_model1)
+plot(irf)
+
+
+
+
+#Phân rã phương sai
+fedv1=fevd(var_model1)
+print(fedv1)
+#Đồ thị phân rã phương sai
+plot(fedv1, names = "rAGR")  
+plot(fedv1, names = "rSHS")
+plot(fedv1, names = "rVOS")
+plot(fedv1, names = "rVSC")
+
+
+
+
+
+#Ước lượng với mô hình VAR
+forecast1 <-predict(var_model1)
+print(forecast1)
+
+
+# Dự báo điểm cho rAGR
+forecast_rAGR <- forecast1$fcst$rAGR[, "fcst"]
+print(forecast_rAGR)
+plot(forecast_rAGR, type="l")
+
+# Dự báo điểm cho rSHS
+forecast_rSHS <- forecast1$fcst$rSHS[, "fcst"]
+print(forecast_rSHS)
+plot(forecast_rSHS, type="l")
+
+
+# Dự báo điểm cho rVOS
+forecast_rVOS <- forecast1$fcst$rVOS[, "fcst"]
+print(forecast_rVOS)
+plot(forecast_rVOS, type="l")
+
+
+# Dự báo điểm cho rVSC
+forecast_rVSC <- forecast1$fcst$rVSC[, "fcst"]
+print(forecast_rVSC)
+plot(forecast_rVSC, type="l")
+
+
+
+
+
+```
+
+
+
