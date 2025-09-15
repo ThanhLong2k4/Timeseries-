@@ -9,12 +9,15 @@ Dự án này thực hiện thu thập và xử lý data bằng Excel, phân tí
 Cá nhân:
 
 -Thu thập, phân tích và dự báo lợi suất cổ phiếu SHS
+
 -Dự báo doanh thu thuần theo từng quý của công ty cổ phần SHS. 
+
 -Áp dụng các mô hình dự báo ARIMA để dự báo giá hoặc lợi suất cổ phiếu trong 10 phiên giao dịch đầu tiên của năm 2025, dựa trên dữ liệu lịch sử năm 2023 và 2024.
 
 Nhóm:
 
 -Xây dựng danh mục đầu tư tối ưu từ 4 mã cổ phiếu và dự báo lợi suất của danh mục.
+
 -Đánh giá độ chính xác của các mô hình dự báo thông qua phân tích sai số và đưa ra nhận định.
 
 📂 Cấu trúc dự án
@@ -22,5 +25,6 @@ Nhóm:
 | File / Thư mục                | Mô tả |
 |--------------------------------|-------|
 | `.docx`                   | 📄 File báo cáo chi tiết |
+| `.xlsx`                   | 📄 File Excel data được xử lý  |
 | `.R`      | 🧑‍💻 Các file code bài tập cá nhân |
 | `.Rmd`           | 👥 File code bài tập nhóm |
