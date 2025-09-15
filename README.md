@@ -4,7 +4,7 @@
 
 📄 Mô tả dự án
 
-Dự án này thực hiện phân tích và dự báo chuỗi thời gian bằng ngôn ngữ R :
+Dự án này thực hiện thu thập và xử lý data bằng Excel, phân tích và dự báo chuỗi thời gian bằng ngôn ngữ R :
 
 Cá nhân:
 
