@@ -21,6 +21,6 @@ Nhóm:
 
 | File / Thư mục                | Mô tả |
 |--------------------------------|-------|
-| `.xlsx`                   | 📄 File báo cáo chi tiết |
+| `.docx`                   | 📄 File báo cáo chi tiết |
 | `.R`      | 🧑‍💻 Các file code bài tập cá nhân |
 | `.Rmd`           | 👥 File code bài tập nhóm |
