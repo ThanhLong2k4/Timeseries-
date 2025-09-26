@@ -1,0 +1,128 @@
+---
+title: "Untitled"
+author: "Nguyễn Thành Long"
+date: "2025-03-03"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(readxl)
+library(Metrics)
+library(forecast)
+dat = read_excel("C:/Users/DELL/Documents/1234.xlsx", sheet = "Sheet2", range = "B1:B61", )
+attach(dat)
+View(dat)
+
+```
+```{r}
+dat = ts(dat, start = c(2010,1), frequency = 4)
+time = seq_along(dat)
+t = head(time, -4)
+t2 = data.frame(t = tail(time, 4))
+plot(time, Revenue, type = 'l')
+```
+```{r}
+train_dat = dat[1:(length(dat)-4)]
+val_dat = dat[(length(dat)-3):length(dat)]
+rev1 = ts(train_dat, start = c(2010,1), frequency = 4)
+rev = ts(dat, start = c(2010, 1), frequency = 4)
+rev1
+```
+
+
+###ADDITIVE SEASONAL
+```{r}
+decom.rev1.a = decompose(rev1, type = 'additive')
+plot(decom.rev1.a)
+```
+```{r}
+rev1.trend.a = decom.rev1.a$trend
+rev1.seas.a = decom.rev1.a$seasonal
+rev1.rand.a = decom.rev1.a$random
+rev1.trendseas.a = rev1 - rev1.rand.a
+plot(rev1, col = 'blue')
+lines(rev1.trend.a)
+lines(rev1.trendseas.a, col = 'red')
+```
+```{r}
+rev1.weight.a = rev1.trendseas.a - rev1.trend.a
+rev1.weight.a
+```
+```{r}
+reg1 = lm(rev1.trend.a ~ t)
+pred = predict(reg1, t2)+head(rev1.seas.a,4)
+rmse(pred, val_dat)
+```
+```{r}
+reg2 = lm(log(rev1.trend.a)~log(t))
+pred = exp(predict(reg2, t2))+head(rev1.seas.a,4)
+rmse(pred, val_dat)
+```
+### MULTI SEASONAL
+```{r}
+decom.rev1.m = decompose(rev1, type = 'm')
+plot(decom.rev1.m)
+```
+```{r}
+rev1.trend.m = decom.rev1.m$trend
+rev1.seas.m = decom.rev1.m$seasonal
+rev1.rand.m = decom.rev1.m$random
+rev1.trendseas.m = rev1 - rev1.rand.m
+```
+```{r}
+reg3 = lm(rev1.trend.m~t)
+pred = predict(reg3, t2)*head(rev1.seas.m,4)
+rmse(pred, val_dat)
+```
+```{r}
+reg4 = lm(log(rev1.trend.m)~log(t))
+pred = exp(predict(reg4, t2))*head(rev1.seas.m,4)
+rmse(pred, val_dat)
+```
+### HW ADD
+```{r}
+hw.rev.a = HoltWinters(rev1, seasonal = 'a')
+hw.rev.a
+```
+```{r}
+pred = forecast(hw.rev.a, h = 4)
+rmse(pred$mean, val_dat)
+```
+```{r}
+hw.rev.a1 = HoltWinters(log(rev1), seasonal = 'a')
+hw.rev.a1
+```
+```{r}
+pred = forecast(hw.rev.a1, h = 4)
+pred
+rmse(exp(pred$mean), val_dat)
+```
+```{r}
+hw.rev.m = HoltWinters(rev1, seasonal = 'm')
+hw.rev.m
+```
+```{r}
+pred = forecast(hw.rev.m, h = 4)
+rmse(pred$mean, val_dat)
+```
+```{r}
+hw.rev.m1 = HoltWinters(log(rev1), seasonal = 'm')
+hw.rev.m1
+```
+```{r}
+pred = forecast(hw.rev.m1, h = 4)
+rmse(exp(pred$mean), val_dat)
+```
+```{r}
+hw.rev.a_2024 = HoltWinters(log(rev), seasonal = 'm')
+hw.rev.a_2024
+```
+```{r}
+pred = forecast(hw.rev.a_2024, 4)
+exp(pred$mean)
+pred
+```
+
