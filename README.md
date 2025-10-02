@@ -24,7 +24,6 @@ Nhóm:
 
 | File / Thư mục                | Mô tả |
 |--------------------------------|-------|
-| `.docx`                   | 📄 File báo cáo chi tiết |
+| `.docx`  `.pdf`                | 📄 File báo cáo chi tiết |
 | `.xlsx`                   | 📄 File Excel data được xử lý  |
-| `.R`      | 🧑‍💻 Các file code bài tập cá nhân |
-| `.Rmd`           | 👥 File code bài tập nhóm |
+| `.Rmd`           | 👥 File code  |
